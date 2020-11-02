@@ -1,0 +1,407 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "minLength": 2
+        },
+        "adminSshKey": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "apiversion": {
+            "vnet": "2020-06-01",
+            "nsg": "2020-06-01",
+            "publicip": "2020-06-01",
+            "lb": "2020-06-01",
+            "networkinterface": "2020-06-01",
+            "vm": "2020-06-01",
+            "vmextension": "2020-06-01"
+        },
+        "vm": {
+            "sku": "Standard_DS2_v2",
+            "username": "[parameters('adminUsername')]",
+            "sshkey": "[parameters('adminSshKey')]"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "nsg-dmz",
+            "apiVersion": "[variables('apiversion').nsg]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Port_80",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/networkSecurityGroups/nsg-dmz"
+            ],
+            "apiVersion": "[variables('apiversion').vnet]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "vnet",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "dmz",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-dmz')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "dmz-lb-pip",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "[variables('apiversion').publicip]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "publicIPAddressVersion": "IPv4"
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/publicIPAddresses/dmz-lb-pip"
+            ],
+            "name": "dmz-lb",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "[variables('apiversion').lb]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "backendAddressPools": [
+                    {
+                        "name": "dmz"
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "dmz-frontend",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','dmz-lb-pip')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "probe-80",
+                        "properties": {
+                            "protocol": "tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "lbrule-port-80",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','dmz-lb'), '/frontendIPConfigurations/dmz-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','dmz-lb'), '/backendAddressPools/dmz')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','dmz-lb'), '/probes/probe-80')]"
+                            },
+                            "protocol": "Tcp",
+                            "loadDistribution": "Default",
+                            "frontendPort": 80,
+                            "backendPort": 80
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/vnet",
+                "Microsoft.Network/loadBalancers/dmz-lb"
+            ],
+            "apiVersion": "[variables('apiversion').networkinterface]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "dmz-vm-nic-1",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "primary": true,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'vnet'), '/subnets/dmz')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'dmz-lb'), '/backendAddressPools/dmz')]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/vnet",
+                "Microsoft.Network/loadBalancers/dmz-lb"
+            ],
+            "apiVersion": "[variables('apiversion').networkinterface]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "dmz-vm-nic-2",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "primary": true,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'vnet'), '/subnets/dmz')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'dmz-lb'), '/backendAddressPools/dmz')]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/vnet",
+                "Microsoft.Network/loadBalancers/dmz-lb"
+            ],
+            "apiVersion": "[variables('apiversion').networkinterface]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "dmz-vm-nic-3",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "primary": true,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'vnet'), '/subnets/dmz')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'dmz-lb'), '/backendAddressPools/dmz')]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/networkInterfaces/dmz-vm-nic-1"
+            ],
+            "apiVersion": "[variables('apiversion').vm]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "dmz-vm-1",
+            "location": "[resourceGroup().location]",
+            "zones": [
+                "1"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vm').sku]"
+                },
+                "osProfile": {
+                    "computerName": "dmz-vm-1",
+                    "adminUsername": "[variables('vm').username]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',variables('vm').username,'/.ssh/authorized_keys')]",
+                                    "keyData": "[variables('vm').sshkey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "dmz-vm-1-os",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'dmz-vm-nic-1')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/networkInterfaces/dmz-vm-nic-2"
+            ],
+            "apiVersion": "[variables('apiversion').vm]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "dmz-vm-2",
+            "location": "[resourceGroup().location]",
+            "zones": [
+                "2"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vm').sku]"
+                },
+                "osProfile": {
+                    "computerName": "dmz-vm-2",
+                    "adminUsername": "[variables('vm').username]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',variables('vm').username,'/.ssh/authorized_keys')]",
+                                    "keyData": "[variables('vm').sshkey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "dmz-vm-2-os",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'dmz-vm-nic-2')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "dependsOn": [
+                "Microsoft.Network/networkInterfaces/dmz-vm-nic-3"
+            ],
+            "apiVersion": "[variables('apiversion').vm]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "dmz-vm-3",
+            "location": "[resourceGroup().location]",
+            "zones": [
+                "3"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vm').sku]"
+                },
+                "osProfile": {
+                    "computerName": "dmz-vm-3",
+                    "adminUsername": "[variables('vm').username]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',variables('vm').username,'/.ssh/authorized_keys')]",
+                                    "keyData": "[variables('vm').sshkey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "dmz-vm-3-os",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'dmz-vm-nic-3')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
