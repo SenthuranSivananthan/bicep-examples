@@ -23,11 +23,9 @@
               "access": "Allow",
               "protocol": "Tcp",
               "sourceAddressPrefix": "Internet",
-              "sourcePortRanges": [
-                "443"
-              ],
+              "sourcePortRange": "*",
               "destinationAddressPrefix": "*",
-              "destinationPortRange": "*"
+              "destinationPortRange": "443"
             }
           },
           {
@@ -38,11 +36,9 @@
               "access": "Allow",
               "protocol": "Tcp",
               "sourceAddressPrefix": "GatewayManager",
-              "sourcePortRanges": [
-                "443"
-              ],
+              "sourcePortRange": "*",
               "destinationAddressPrefix": "*",
-              "destinationPortRange": "*"
+              "destinationPortRange": "443"
             }
           },
           {
@@ -53,12 +49,12 @@
               "access": "Allow",
               "protocol": "*",
               "sourceAddressPrefix": "*",
-              "sourcePortRanges": [
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "destinationPortRanges": [
                 "22",
                 "3389"
-              ],
-              "destinationAddressPrefix": "VirtualNetwork",
-              "destinationPortRange": "*"
+              ]
             }
           },
           {
@@ -69,11 +65,9 @@
               "access": "Allow",
               "protocol": "Tcp",
               "sourceAddressPrefix": "*",
-              "sourcePortRanges": [
-                "443"
-              ],
+              "sourcePortRange": "*",
               "destinationAddressPrefix": "AzureCloud",
-              "destinationPortRange": "*"
+              "destinationPortRange": "443"
             }
           }
         ]

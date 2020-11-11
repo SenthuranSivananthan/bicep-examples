@@ -15,11 +15,9 @@ resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' =
                     access: 'Allow'
                     protocol: 'Tcp'
                     sourceAddressPrefix: 'Internet'
-                    sourcePortRanges: [
-                        '443'
-                    ]
+                    sourcePortRange: '*'
                     destinationAddressPrefix: '*'
-                    destinationPortRange: '*'
+                    destinationPortRange: '443'
                 }
             }
             {
@@ -30,11 +28,9 @@ resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' =
                     access: 'Allow'
                     protocol: 'Tcp'
                     sourceAddressPrefix: 'GatewayManager'
-                    sourcePortRanges: [
-                        '443'
-                    ]
+                    sourcePortRange: '*'
                     destinationAddressPrefix: '*'
-                    destinationPortRange: '*'
+                    destinationPortRange: '443'
                 }
             }
             {
@@ -45,12 +41,12 @@ resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' =
                     access: 'Allow'
                     protocol: '*'
                     sourceAddressPrefix: '*'
-                    sourcePortRanges: [
+                    sourcePortRange: '*'
+                    destinationAddressPrefix: 'VirtualNetwork'
+                    destinationPortRanges: [
                         '22'
                         '3389'
                     ]
-                    destinationAddressPrefix: 'VirtualNetwork'
-                    destinationPortRange: '*'
                 }
             }
             {
@@ -61,11 +57,9 @@ resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' =
                     access: 'Allow'
                     protocol: 'Tcp'
                     sourceAddressPrefix: '*'
-                    sourcePortRanges: [
-                        '443'
-                    ]
+                    sourcePortRange: '*'
                     destinationAddressPrefix: 'AzureCloud'
-                    destinationPortRange: '*'
+                    destinationPortRange: '443'
                 }
             }
         ]
