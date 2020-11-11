@@ -1,6 +1,11 @@
 param vnetName string
 param bastionName string
 
+var bastionSubnetName = 'AzureBastionSubnet' // must be this name
+param appServerSubnetName string = 'AppServers'
+param dataServerSubnetName string = 'DataServers'
+param netAppSubnetName string = 'NetAppFiles'
+
 resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     name: 'nsg-bastion'
     location: resourceGroup().location
@@ -87,7 +92,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         }
         subnets: [
             {
-                name: 'AzureBastionSubnet'
+                name: bastionSubnetName
                 properties: {
                     addressPrefix: '10.0.1.0/27'
                     networkSecurityGroup: {
@@ -96,7 +101,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
                 }
             }
             {
-                name: 'AppServers'
+                name: appServerSubnetName
                 properties: {
                     addressPrefix: '10.0.2.0/24'
                     networkSecurityGroup: {
@@ -105,7 +110,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
                 }
             }
             {
-                name: 'DataServers'
+                name: dataServerSubnetName
                 properties: {
                     addressPrefix: '10.0.3.0/24'
                     networkSecurityGroup: {
@@ -114,7 +119,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
                 }
             }
             {
-                name: 'NetAppFiles'
+                name: netAppSubnetName
                 properties: {
                     addressPrefix: '10.0.4.0/24'
                     delegations: [
@@ -153,7 +158,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-06-01' = {
                 name: 'IpConf'
                 properties: {
                     subnet: {
-                        id: '${vnet.id}/subnets/AzureBastionSubnet'
+                        id: '${vnet.id}/subnets/${bastionSubnetName}'
                     }
                     publicIPAddress: {
                         id: bastionPublicIP.id
@@ -163,3 +168,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-06-01' = {
         ]
     }
 }
+
+output appServerSubnetId string = '${vnet.id}/subnets/${appServerSubnetName}'
+output dataServerSubnetId string = '${vnet.id}/subnets/${appServerSubnetName}'
+output netAppSubnetId string = '${vnet.id}/subnets/${netAppSubnetName}'
