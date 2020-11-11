@@ -170,5 +170,5 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-06-01' = {
 }
 
 output appServerSubnetId string = '${vnet.id}/subnets/${appServerSubnetName}'
-output dataServerSubnetId string = '${vnet.id}/subnets/${appServerSubnetName}'
+output dataServerSubnetId string = '${vnet.id}/subnets/${dataServerSubnetName}'
 output netAppSubnetId string = '${vnet.id}/subnets/${netAppSubnetName}'
