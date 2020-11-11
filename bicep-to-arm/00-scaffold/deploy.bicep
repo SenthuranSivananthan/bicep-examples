@@ -1,10 +1,9 @@
-var location = 'eastus'
-var vnetName = 'vnet'
-var bastionName = 'bastion'
+param vnetName string
+param bastionName string
 
 resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     name: 'nsg-bastion'
-    location: location
+    location: resourceGroup().location
     properties: {
         securityRules: [
             {
@@ -69,16 +68,16 @@ resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' =
 
 resource nsgAppServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     name: 'nsg-appserver'
-    location: location
+    location: resourceGroup().location
 }
 
 resource nsgDataServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     name: 'nsg-dataserver'
-    location: location
+    location: resourceGroup().location
 }
 
 resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-    location: location
+    location: resourceGroup().location
     name: vnetName
     properties: {
         addressSpace: {
@@ -133,7 +132,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
 }
 
 resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
-    location: location
+    location: resourceGroup().location
     name: '${bastionName}-publicip'
     sku: {
         name: 'Standard'
@@ -145,7 +144,7 @@ resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
 }
 
 resource bastion 'Microsoft.Network/bastionHosts@2020-06-01' = {
-    location: location
+    location: resourceGroup().location
     name: bastionName
     properties: {
         dnsName: uniqueString(resourceGroup().id)

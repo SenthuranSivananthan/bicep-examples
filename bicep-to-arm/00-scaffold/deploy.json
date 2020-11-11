@@ -1,18 +1,21 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "functions": [],
-  "variables": {
-    "location": "eastus",
-    "vnetName": "vnet",
-    "bastionName": "bastion"
+  "parameters": {
+    "vnetName": {
+      "type": "string"
+    },
+    "bastionName": {
+      "type": "string"
+    }
   },
+  "functions": [],
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-06-01",
       "name": "nsg-bastion",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
           {
@@ -77,19 +80,19 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-06-01",
       "name": "nsg-appserver",
-      "location": "[variables('location')]"
+      "location": "[resourceGroup().location]"
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-06-01",
       "name": "nsg-dataserver",
-      "location": "[variables('location')]"
+      "location": "[resourceGroup().location]"
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2020-06-01",
-      "location": "[variables('location')]",
-      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('vnetName')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -149,8 +152,8 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-06-01",
-      "location": "[variables('location')]",
-      "name": "[format('{0}-publicip', variables('bastionName'))]",
+      "location": "[resourceGroup().location]",
+      "name": "[format('{0}-publicip', parameters('bastionName'))]",
       "sku": {
         "name": "Standard"
       },
@@ -162,8 +165,8 @@
     {
       "type": "Microsoft.Network/bastionHosts",
       "apiVersion": "2020-06-01",
-      "location": "[variables('location')]",
-      "name": "[variables('bastionName')]",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('bastionName')]",
       "properties": {
         "dnsName": "[uniqueString(resourceGroup().id)]",
         "ipConfigurations": [
@@ -171,18 +174,18 @@
             "name": "IpConf",
             "properties": {
               "subnet": {
-                "id": "[format('{0}/subnets/AzureBastionSubnet', resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')))]"
+                "id": "[format('{0}/subnets/AzureBastionSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-publicip', variables('bastionName')))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-publicip', parameters('bastionName')))]"
               }
             }
           }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-publicip', variables('bastionName')))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-publicip', parameters('bastionName')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
       ]
     }
   ]
