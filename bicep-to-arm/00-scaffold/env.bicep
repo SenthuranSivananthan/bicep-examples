@@ -1,7 +1,13 @@
 targetScope = 'subscription'
 
 param username string
-param sshPublicKey string
+param linuxVMPublicKey string {
+  secure: true
+}
+
+param windowsVMPassword string {
+    secure: true
+}
 
 resource rg 'Microsoft.Resources/resourceGroups@2020-06-01' = {
     location: 'eastus2'
@@ -20,7 +26,7 @@ module networkScaffold './network.bicep' = {
     }
 }
 
-module appServerLinux1 './linux-vm-ubuntu18.bicep' = {
+module appServerLinux1 './vm-linux-ubuntu18.bicep' = {
     name: 'app1-linux'
     scope: resourceGroup(rg.name)
     params: {
@@ -30,6 +36,20 @@ module appServerLinux1 './linux-vm-ubuntu18.bicep' = {
         subnetId: reference('networkScaffold').outputs.appServerSubnetId.value
         zone: '1'
         username: username
-        sshPublicKey: sshPublicKey
+        sshPublicKey: linuxVMPublicKey
+    }
+}
+
+module dataWin1 './vm-windows-win2019.bicep' = {
+    name: 'data-win1'
+    scope: resourceGroup(rg.name)
+    params: {
+        enableAcceleratedNetworking: true
+        vmName: 'data1-win2019'
+        vmSize: 'Standard_DS2_v2'
+        subnetId: reference('networkScaffold').outputs.dataServerSubnetId.value
+        zone: '1'
+        username: username
+        password: windowsVMPassword
     }
 }
