@@ -96,7 +96,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
             {
                 name: 'AzureBastionSubnet'
                 properties: {
-                    addressPrefix: '10.0.1.0/24'
+                    addressPrefix: '10.0.1.0/27'
                     networkSecurityGroup: {
                         id: nsgBastionServer.id
                     }

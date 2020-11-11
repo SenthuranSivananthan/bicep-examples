@@ -106,7 +106,7 @@
           {
             "name": "AzureBastionSubnet",
             "properties": {
-              "addressPrefix": "10.0.1.0/24",
+              "addressPrefix": "10.0.1.0/27",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-bastion')]"
               }
