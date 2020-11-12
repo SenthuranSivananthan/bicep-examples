@@ -1,10 +1,19 @@
-param vnetName string
 param bastionName string
 
+param vnetName string
+param vnetAddressPrefix string = '10.0.0.0/16'
+
 var bastionSubnetName = 'AzureBastionSubnet' // must be this name
+param bastionSubnetAddressPrefix string = '10.0.1.0/27'
+
 param appServerSubnetName string = 'AppServers'
+param appServerAddressPrefix string = '10.0.2.0/24'
+
 param dataServerSubnetName string = 'DataServers'
+param dataServerAddressPrefix string = '10.0.3.0/24'
+
 param netAppSubnetName string = 'NetAppFiles'
+param netAppAddressPrefix string = '10.0.4.0/24'
 
 resource nsgBastionServer 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     name: 'nsg-bastion'
@@ -87,14 +96,14 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
     properties: {
         addressSpace: {
             addressPrefixes: [
-                '10.0.0.0/16'
+                vnetAddressPrefix
             ]
         }
         subnets: [
             {
                 name: bastionSubnetName
                 properties: {
-                    addressPrefix: '10.0.1.0/27'
+                    addressPrefix: bastionSubnetAddressPrefix
                     networkSecurityGroup: {
                         id: nsgBastionServer.id
                     }
@@ -103,7 +112,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
             {
                 name: appServerSubnetName
                 properties: {
-                    addressPrefix: '10.0.2.0/24'
+                    addressPrefix: appServerAddressPrefix
                     networkSecurityGroup: {
                         id: nsgAppServer.id
                     }
@@ -112,7 +121,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
             {
                 name: dataServerSubnetName
                 properties: {
-                    addressPrefix: '10.0.3.0/24'
+                    addressPrefix: dataServerAddressPrefix
                     networkSecurityGroup: {
                         id: nsgDataServer.id
                     }
@@ -121,7 +130,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
             {
                 name: netAppSubnetName
                 properties: {
-                    addressPrefix: '10.0.4.0/24'
+                    addressPrefix: netAppAddressPrefix
                     delegations: [
                         {
                             name: 'Microsoft.Netapp.volumes'
