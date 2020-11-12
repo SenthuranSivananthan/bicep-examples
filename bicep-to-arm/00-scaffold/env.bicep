@@ -1,5 +1,8 @@
 targetScope = 'subscription'
 
+param resourceGroupName string
+param location string
+
 param username string
 param linuxVMPublicKey string {
   secure: true
@@ -10,8 +13,8 @@ param windowsVMPassword string {
 }
 
 resource rg 'Microsoft.Resources/resourceGroups@2020-06-01' = {
-    location: 'eastus2'
-    name: 'rg2'
+    location: location
+    name: resourceGroupName
 }
 
 module networkScaffold './network.bicep' = {
