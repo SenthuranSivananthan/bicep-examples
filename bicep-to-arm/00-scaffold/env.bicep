@@ -22,10 +22,20 @@ module networkScaffold './network.bicep' = {
     scope: resourceGroup(rg.name)
     params: {
         bastionName: 'bastion'
+
         vnetName: 'vnet'
+        vnetAddressPrefix: '20.0.0.0/16'
+
+        bastionSubnetAddressPrefix: '20.0.1.0/27'
+        
         appServerSubnetName: 'AppServers'
+        appServerAddressPrefix: '20.0.2.0/24'
+
         dataServerSubnetName: 'DataServers'
+        dataServerAddressPrefix: '20.0.3.0/24'
+
         netAppSubnetName: 'NetAppFiles'
+        netAppAddressPrefix: '20.0.4.0/24'
     }
 }
 
