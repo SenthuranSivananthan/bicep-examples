@@ -46,7 +46,7 @@ module appServerLinux1 './vm-linux-ubuntu18.bicep' = {
         enableAcceleratedNetworking: true
         vmName: 'app1-linux'
         vmSize: 'Standard_DS2_v2'
-        subnetId: reference('networkScaffold').outputs.appServerSubnetId.value
+        subnetId: networkScaffold.outputs.appServerSubnetId
         zone: '1'
         username: username
         sshPublicKey: linuxVMPublicKey
@@ -60,7 +60,7 @@ module dataWin1 './vm-windows-win2019.bicep' = {
         enableAcceleratedNetworking: true
         vmName: 'data1-win2019'
         vmSize: 'Standard_DS2_v2'
-        subnetId: reference('networkScaffold').outputs.dataServerSubnetId.value
+        subnetId: networkScaffold.outputs.dataServerSubnetId
         zone: '1'
         username: username
         password: windowsVMPassword

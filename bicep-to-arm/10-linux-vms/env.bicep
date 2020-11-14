@@ -29,7 +29,7 @@ module appServerLinux1 '../00-scaffold/vm-linux-ubuntu18.bicep' = {
         enableAcceleratedNetworking: true
         vmName: 'app1-linux'
         vmSize: 'Standard_DS2_v2'
-        subnetId: reference('networkScaffold').outputs.appServerSubnetId.value
+        subnetId: networkScaffold.outputs.appServerSubnetId
         zone: '1'
         username: username
         sshPublicKey: linuxVMPublicKey

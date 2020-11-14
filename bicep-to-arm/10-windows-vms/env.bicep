@@ -29,7 +29,7 @@ module dataWin1 '../00-scaffold/vm-windows-win2019.bicep' = {
         enableAcceleratedNetworking: true
         vmName: 'data1-win2019'
         vmSize: 'Standard_DS2_v2'
-        subnetId: reference('networkScaffold').outputs.dataServerSubnetId.value
+        subnetId: networkScaffold.outputs.dataServerSubnetId
         zone: '1'
         username: username
         password: windowsVMPassword

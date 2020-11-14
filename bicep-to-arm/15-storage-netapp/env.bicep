@@ -29,7 +29,7 @@ resource netAppVolume 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes@202
     name: '${netappCapacityPool.name}/${netAppVolumeName}'
     location: resourceGroup().location
     properties: {
-        subnetId: reference('networkScaffold').outputs.netAppSubnetId.value
+        subnetId: networkScaffold.outputs.netAppSubnetId
         creationToken: netAppVolumeName
         usageThreshold: '107374182400' // 100 GiB
         protocolTypes:[
